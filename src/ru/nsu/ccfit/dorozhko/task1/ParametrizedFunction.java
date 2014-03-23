@@ -39,18 +39,19 @@ public class ParametrizedFunction {
                 funcPanel.setY0(funcPanel.getY0() + funcPanel.getMoveStep());
             }
         };
-        AbstractAction moveRight = new AbstractAction("Вправо", MainFrame.createImageIcon("/images/right.png")) {
+        AbstractAction moveLeft = new AbstractAction("Влево", MainFrame.createImageIcon("/images/left.png")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 funcPanel.setX0(funcPanel.getX0() + funcPanel.getMoveStep());
             }
         };
-        AbstractAction moveLeft = new AbstractAction("Влево", MainFrame.createImageIcon("/images/left.png")) {
+        AbstractAction moveRight = new AbstractAction("Вправо", MainFrame.createImageIcon("/images/right.png")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 funcPanel.setX0(funcPanel.getX0() - funcPanel.getMoveStep());
             }
         };
+
 
         mainFrame.addAction(moveUp);
         mainFrame.addAction(moveDown);
