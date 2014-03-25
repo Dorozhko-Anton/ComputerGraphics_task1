@@ -121,7 +121,4 @@ public class MainFrame extends JFrame {
         mainFrame.setVisible(true);
     }
 
-    public static void main(String args[]) {
-        CreateAndShowGUI();
-    }
 }

@@ -141,6 +141,20 @@ public class ParametrizedFunction {
             }
         };
         mainFrame.addAction(showOptionsPane);
+
+        AbstractAction returnToDefaults =
+                new AbstractAction("Сбросить изменения",  MainFrame.createImageIcon("/images/reset.png")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                funcPanel.setX0(400);
+                funcPanel.setY0(300);
+                funcPanel.setUnitsX(20);
+                funcPanel.setUnitsY(20);
+            }
+        };
+        mainFrame.addAction(returnToDefaults);
+
         JMenu navigation = new JMenu("Навигация");
         mainFrame.addMenu(navigation);
 
@@ -151,6 +165,8 @@ public class ParametrizedFunction {
         navigation.add(decreaseScale);
         navigation.add(increaseScale);
         navigation.add(showOptionsPane);
+        navigation.add(returnToDefaults);
+
 
 
         AbstractAction contacts = new AbstractAction("Контакты", MainFrame.createImageIcon("/images/contact.png")) {
