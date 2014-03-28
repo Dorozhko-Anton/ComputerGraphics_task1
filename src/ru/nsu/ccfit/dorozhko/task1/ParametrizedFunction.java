@@ -9,6 +9,9 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+
+import static java.awt.Color.BLUE;
 
 /**
  * Created by Anton on 10.03.14.
@@ -30,19 +33,13 @@ public class ParametrizedFunction {
         AbstractAction moveUp = new AbstractAction("Вверх", MainFrame.createImageIcon("/images/up.png")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                funcPanel.setY0(funcPanel.getY0() - funcPanel.getMoveStep());
+                funcPanel.setY0(funcPanel.getY0() + funcPanel.getMoveStep());
             }
         };
         AbstractAction moveDown = new AbstractAction("Вниз", MainFrame.createImageIcon("/images/down.png")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                funcPanel.setY0(funcPanel.getY0() + funcPanel.getMoveStep());
-            }
-        };
-        AbstractAction moveLeft = new AbstractAction("Влево", MainFrame.createImageIcon("/images/left.png")) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                funcPanel.setX0(funcPanel.getX0() + funcPanel.getMoveStep());
+                funcPanel.setY0(funcPanel.getY0() - funcPanel.getMoveStep());
             }
         };
         AbstractAction moveRight = new AbstractAction("Вправо", MainFrame.createImageIcon("/images/right.png")) {
@@ -51,13 +48,17 @@ public class ParametrizedFunction {
                 funcPanel.setX0(funcPanel.getX0() - funcPanel.getMoveStep());
             }
         };
-
+        AbstractAction moveLeft = new AbstractAction("Влево", MainFrame.createImageIcon("/images/left.png")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                funcPanel.setX0(funcPanel.getX0() + funcPanel.getMoveStep());
+            }
+        };
 
         mainFrame.addAction(moveUp);
         mainFrame.addAction(moveDown);
-        mainFrame.addAction(moveRight);
         mainFrame.addAction(moveLeft);
-
+        mainFrame.addAction(moveRight);
 
         // scale + -
         AbstractAction decreaseScale = new AbstractAction("Уменьшить", MainFrame.createImageIcon("/images/dec.png")) {
@@ -213,32 +214,64 @@ public class ParametrizedFunction {
         private double minY = -100;
         private int scaleStep = 10;
         private Point2D mousePt;
+
+        private BufferedImage canvas;
+
+
         private final MouseAdapter getPoint = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                mousePt = e.getPoint();
-
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    mousePt = e.getPoint();
+                }
             }
+
         };
         private final MouseMotionAdapter dragAndDropAxis = new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
-                x0 += e.getX() - mousePt.getX();
-                y0 += e.getY() - mousePt.getY();
-                mousePt = e.getPoint();
-                repaint();
+                if (SwingUtilities.isLeftMouseButton(e)) {
+
+                    double maxX = ((getSize().getWidth() - (x0 + e.getX() - mousePt.getX())) / unitsX);
+                    double minX = -(double) (x0 + e.getX() - mousePt.getX()) / unitsX;
+
+                    double minY = (-(getSize().getHeight() - ( y0 + e.getY() - mousePt.getY())) / unitsY);
+                    double maxY = (double) (y0 + e.getY() - mousePt.getY()) / unitsY;
+
+
+                    if (maxX < 40
+                            && minX > -40) {
+                        x0 += e.getX() - mousePt.getX();
+                    }
+                    if (maxY < 40
+                            && minY > -40) {
+                        y0 += e.getY() - mousePt.getY();
+                    }
+
+                    mousePt = e.getPoint();
+                    repaint();
+                }
+
             }
         };
         private final MouseWheelListener scale = new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
 
-                if (unitsX - Math.signum(e.getUnitsToScroll()) * scaleStep > 10) {
+                int oldUnitsX = unitsX;
+                int oldUnitsY = unitsY;
+
+                if (unitsX - Math.signum(e.getUnitsToScroll()) * scaleStep > 15
+                        && unitsX - Math.signum(e.getUnitsToScroll()) * scaleStep < 500) {
                     unitsX -= Math.signum(e.getUnitsToScroll()) * scaleStep;
                 }
-                if (unitsY - Math.signum(e.getUnitsToScroll()) * scaleStep > 10) {
+                if (unitsY - Math.signum(e.getUnitsToScroll()) * scaleStep > 15
+                        && unitsY - Math.signum(e.getUnitsToScroll()) * scaleStep < 500) {
                     unitsY -= Math.signum(e.getUnitsToScroll()) * scaleStep;
                 }
+                x0 = e.getX() - (e.getX() - x0) * unitsX / oldUnitsX;
+                y0 = e.getY() - (e.getY() - y0) * unitsY / oldUnitsY;
+
                 repaint();
 
             }
@@ -252,10 +285,16 @@ public class ParametrizedFunction {
          * Set pixel relative to origin
          * @param x - x coord
          * @param y - y coord
-         * @param g - graphics
+         * @param g - bufferedImage
          */
-        private void putPixel(int x, int y, Graphics g) {
-            g.fillRect(x0 + x, y0 - y, 1, 1);
+        private void putPixel(int x, int y, BufferedImage g) {
+            //g.fillRect(x0 + x, y0 - y, 1, 1);
+            if ((x0 + x < g.getWidth())
+                    && (x0 + x > 0)
+                    && (y0 - y < g.getHeight())
+                    && (y0 - y > 0)) {
+                g.setRGB(x0 + x, y0 - y, Color.BLUE.getRGB());
+            }
         }
 
         /**
@@ -266,16 +305,31 @@ public class ParametrizedFunction {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            paintGrid(g);
+
             maxX = ((getSize().getWidth() - x0) / unitsX);
             minX = -(double) x0 / unitsX;
             minY = (-(getSize().getHeight() - y0) / unitsY);
             maxY = (double) y0 / unitsY;
 
-            g.setColor(Color.BLUE);
+
+            canvas = new BufferedImage((int)getSize().getWidth(), (int)getSize().getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = (Graphics2D) canvas.getGraphics();
+
+            // Clear the background with white
+
+            g2d.setBackground(Color.WHITE);
+            g2d.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+
+            paintGrid(canvas.getGraphics());
+            canvas.getGraphics().setColor(BLUE);
 
             PFunc pFunc = new PFunc();
-            pFunc.paintPFunc(g);
+            pFunc.paintPFunc(canvas);
+
+            g.drawImage(canvas, 0, 0, null);
+
+
         }
 
         /**
@@ -286,18 +340,19 @@ public class ParametrizedFunction {
             Dimension size = getSize();
 
             g.setColor(Color.LIGHT_GRAY);
-
-            for (int x = x0; x < size.getWidth(); x += unitsX) {
+            int startX = x0;
+            for (int x = startX; x < size.getWidth(); x += unitsX) {
                 g.drawLine(x, 0, x, (int) size.getHeight());
             }
-            for (int x = x0; x > 0; x -= unitsX) {
+            for (int x = startX; x > 0; x -= unitsX) {
                 g.drawLine(x, 0, x, (int) size.getHeight());
             }
 
-            for (int y = y0; y < size.getHeight(); y += unitsY) {
+            int startY = y0;
+            for (int y = startY; y < size.getHeight(); y += unitsY) {
                 g.drawLine(0, y, (int) size.getWidth(), y);
             }
-            for (int y = y0; y > 0; y -= unitsY) {
+            for (int y = startY; y > 0; y -= unitsY) {
                 g.drawLine(0, y, (int) size.getWidth(), y);
             }
 
@@ -412,7 +467,7 @@ public class ParametrizedFunction {
              * divide function into continuous intervals and paint them separately
              * @param g - graphics
              */
-            public void paintPFunc(Graphics g) {
+            public void paintPFunc(BufferedImage g) {
                 double Mx;
                 double My;
                 double M;
